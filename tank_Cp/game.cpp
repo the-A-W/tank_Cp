@@ -5,16 +5,17 @@
 //地图用二维数组存储
 //可消除的墙为1，不可消除的墙为2，老鹰 （3，4）敌方坦克 100~109,我方坦克200
 int map[26][26];
-/***************************************
-* 控制坦克按相应的方向移动
-* 返回值：失败 - false 成功 - true
-***************************************/
-bool tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step);
 
-void game()
+bool game(int stage)
 {
+	setbkcolor(BLACK);//设置背景色
+	cleardevice();
 	//背景音乐
 	//mciSendString(_T("play cxk_1.mp3 repeat"), NULL, 0, NULL);
+
+	//初始化随机数种子
+	srand((unsigned int)time(NULL));
+
 	//我方坦克
 	Tank my_tank;
 	//我方坦克发射的子弹
@@ -27,10 +28,8 @@ void game()
 
 
 	//加载地图
-	Map();
+	Map(stage);
 
-	//存储键盘输入
-	int key;
 	//记录当前的程序的休眠次数，每次10ms
 	int times = 0;
 	//敌方坦克存在数量
@@ -81,13 +80,17 @@ void game()
 		enemy_tank[i].y = 0;
 		enemy_tank[i].live = 1;
 		enemy_tank[i].direction = DOWN;
-		set_map(enemy_tank[i].x, enemy_tank[i].y, 100 + i);
+		enemy_tank[i].Is_Mycamp = false;
+		//set_map(enemy_tank[i].x, enemy_tank[i].y, 100 + i);
 		enemy_bullet[i].status = false;
 	}
 	//敌方坦克登场
-	tank_walk(&enemy_tank[0], DOWN, &img_enemytank[DOWN], 0);
-	tank_walk(&enemy_tank[1], DOWN, &img_enemytank[DOWN], 0);
-	tank_walk(&enemy_tank[2], DOWN, &img_enemytank[DOWN], 0);
+	do_tank_walk(&enemy_tank[0], DOWN, &img_enemytank[DOWN], 0);
+	set_map(enemy_tank[0].x, enemy_tank[0].y, 100 );
+	do_tank_walk(&enemy_tank[1], DOWN, &img_enemytank[DOWN], 0);
+	set_map(enemy_tank[1].x, enemy_tank[1].y, 101);
+	do_tank_walk(&enemy_tank[2], DOWN, &img_enemytank[DOWN], 0);
+	set_map(enemy_tank[2].x, enemy_tank[2].y, 102);
 	enemy_total = 3;
 
 	//显示坦克		
@@ -96,135 +99,284 @@ void game()
 	
 	while (true)
 	{
+		if (times > 0 && times % 1000 == 0 && enemy_total < enemy_num)
+		{
+			set_map(enemy_tank[enemy_total].x, enemy_tank[enemy_total].y, 100 + enemy_total);
+			enemy_total++;
+		}
+		if (times>0 && times % 200 == 0)
+		{
+			for (int i = 0;i < enemy_total;i++)
+			{
+				if (!enemy_tank[i].live)
+					continue;
+				//攻击我方老巢
+				if (i % 2 == 0)
+				{
+					DIRECTION d = enemy_direction(&enemy_tank[i], 12, 24);
+					tank_walk(&enemy_tank[i], d, &img_enemytank[d]);
+				}
+				else
+				{
+					DIRECTION d = enemy_direction(&enemy_tank[i], my_tank.x, my_tank.y);
+					tank_walk(&enemy_tank[i], d, &img_enemytank[d]);
+				}
+				tank_fire(&enemy_tank[i], &enemy_bullet[i]);
+			}
+			
+		}
+		
 		//0.5s移动一次敌方坦克
-		if (times % 30 == 0)
+		else if (times % 50 == 0)
 		{
 			for (int i = 0;i < enemy_total;i++)
 			{
 				if (enemy_tank[i].live)
 				{
-					enemy_tank_walk(&enemy_tank[i], enemy_tank[i].direction, &img_enemytank[enemy_tank[i].direction]);
+					tank_walk(&enemy_tank[i], enemy_tank[i].direction, &img_enemytank[enemy_tank[i].direction]);
 				}
 			}
 		}
 		if (times % 10 == 0)
 		{
-			if (_kbhit())
+			//if (_kbhit())
+			//{
+			//	key = _getch();
+			//	switch (key)
+			//	{
+			//	case 'a'://左
+			//		//前者判断是否越界，后者判断是否是空地
+			//		if (my_tank.direction == LEFT && my_tank.x - 1 >= 0 && map[my_tank.y][my_tank.x - 1] == 0 && map[my_tank.y + 1][my_tank.x - 1] == 0)
+			//		{
+			//			tank_walk(&my_tank, LEFT, &img_mytank[my_tank.direction], 1);
+			//		}
+			//		else if (my_tank.direction != LEFT)
+			//		{
+			//			//调整方向
+			//			my_tank.direction = LEFT;
+			//			tank_walk(&my_tank, LEFT, &img_mytank[my_tank.direction], 0);
+			//		}
+			//		break;
+			//	case 'w'://上
+			//		if (my_tank.direction == UP && my_tank.y - 1 >= 0 && map[my_tank.y - 1][my_tank.x] == 0 && map[my_tank.y - 1][my_tank.x + 1] == 0)
+			//		{
+			//			tank_walk(&my_tank, UP, &img_mytank[my_tank.direction], 1);
+			//		}
+			//		else if (my_tank.direction != UP)
+			//		{
+			//			my_tank.direction = UP;
+			//			tank_walk(&my_tank, UP, &img_mytank[my_tank.direction], 0);
+			//		}
+			//		break;
+
+			//	case 's'://下
+			//		if (my_tank.direction == DOWN && my_tank.y + 2 <= 25 && map[my_tank.y + 2][my_tank.x] == 0 && map[my_tank.y + 2][my_tank.x + 1] == 0)
+			//		{
+			//			tank_walk(&my_tank, DOWN, &img_mytank[my_tank.direction], 1);
+			//		}
+			//		else if (my_tank.direction != DOWN)
+			//		{
+			//			my_tank.direction = DOWN;
+			//			tank_walk(&my_tank, DOWN, &img_mytank[my_tank.direction], 0);
+			//		}
+			//		break;
+
+			//	case 'd'://右
+			//		if (my_tank.direction == RIGHT && my_tank.x + 2 <= 25 && map[my_tank.y][my_tank.x + 2] == 0 && map[my_tank.y + 1][my_tank.x + 2] == 0)
+			//		{
+			//			tank_walk(&my_tank, RIGHT, &img_mytank[my_tank.direction], 1);
+			//		}
+			//		else if (my_tank.direction != RIGHT)
+			//		{
+			//			my_tank.direction = RIGHT;
+			//			tank_walk(&my_tank, RIGHT, &img_mytank[my_tank.direction], 0);
+			//		}
+			//		break;
+
+			//	case 'j'://开火
+			//		if (!my_bullet.status)
+			//		{
+			//			PlaySound(_T("paoji.wav"), NULL, SND_FILENAME | SND_ASYNC);
+			//			if (my_tank.direction == UP)
+			//			{
+			//				//子弹绘图坐标修正
+			//				my_bullet.pos_x = my_tank.x * 25 + 23;
+			//				my_bullet.pos_y = my_tank.y * 25 - 3;
+			//			}
+			//			else if (my_tank.direction == LEFT)
+			//			{
+			//				//子弹绘图坐标修正
+			//				my_bullet.pos_x = my_tank.x * 25 - 3;
+			//				my_bullet.pos_y = my_tank.y * 25 + 23;
+			//			}
+			//			else if (my_tank.direction == DOWN)
+			//			{
+			//				//子弹绘图坐标修正
+			//				my_bullet.pos_x = my_tank.x * 25 + 23;
+			//				my_bullet.pos_y = my_tank.y * 25 + 50;
+			//			}
+			//			else if (my_tank.direction == RIGHT)
+			//			{
+			//				//子弹绘图坐标修正
+			//				my_bullet.pos_x = my_tank.x * 25 + 50;
+			//				my_bullet.pos_y = my_tank.y * 25 + 23;
+			//			}
+			//			//获取子弹方向
+			//			my_bullet.direction = my_tank.direction;
+			//			//改变子弹状态
+			//			my_bullet.status = !my_bullet.status;
+			//		}
+			//		break;
+
+			//	case 'p'://暂停
+			//		system("pause");
+			//		break;
+			//	
+			//	case 27://esc的ascii码值为27，键入esc时返回主菜单
+			//		display_1();
+			//		break;
+			//	
+			//	default:
+			//		break;
+			//	}
+			//}
+			if (KEY_DOWN(Key_LEFT))
 			{
-				key = _getch();
-				switch (key)
-				{
-				case 'a'://左
-					//前者判断是否越界，后者判断是否是空地
-					if (my_tank.direction == LEFT && my_tank.x - 1 >= 0 && map[my_tank.y][my_tank.x - 1] == 0 && map[my_tank.y + 1][my_tank.x - 1] == 0)
+				tank_walk(&my_tank, LEFT, &img_mytank[LEFT]);
+			}
+			if (KEY_DOWN(Key_UP))
+			{
+				if (my_tank.direction == UP && my_tank.y - 1 >= 0 && map[my_tank.y - 1][my_tank.x] == 0 && map[my_tank.y - 1][my_tank.x + 1] == 0)
 					{
-						tank_walk(&my_tank, LEFT, &img_mytank[my_tank.direction], 1);
-					}
-					else if (my_tank.direction != LEFT)
-					{
-						//调整方向
-						my_tank.direction = LEFT;
-						tank_walk(&my_tank, LEFT, &img_mytank[my_tank.direction], 0);
-					}
-					break;
-				case 'w'://上
-					if (my_tank.direction == UP && my_tank.y - 1 >= 0 && map[my_tank.y - 1][my_tank.x] == 0 && map[my_tank.y - 1][my_tank.x + 1] == 0)
-					{
-						tank_walk(&my_tank, UP, &img_mytank[my_tank.direction], 1);
+						do_tank_walk(&my_tank, UP, &img_mytank[my_tank.direction], 1);
 					}
 					else if (my_tank.direction != UP)
 					{
 						my_tank.direction = UP;
-						tank_walk(&my_tank, UP, &img_mytank[my_tank.direction], 0);
+						do_tank_walk(&my_tank, UP, &img_mytank[my_tank.direction], 0);
 					}
-					break;
-
-				case 's'://下
-					if (my_tank.direction == DOWN && my_tank.y + 2 <= 25 && map[my_tank.y + 2][my_tank.x] == 0 && map[my_tank.y + 2][my_tank.x + 1] == 0)
-					{
-						tank_walk(&my_tank, DOWN, &img_mytank[my_tank.direction], 1);
-					}
-					else if (my_tank.direction != DOWN)
-					{
-						my_tank.direction = DOWN;
-						tank_walk(&my_tank, DOWN, &img_mytank[my_tank.direction], 0);
-					}
-					break;
-
-				case 'd'://右
-					if (my_tank.direction == RIGHT && my_tank.x + 2 <= 25 && map[my_tank.y][my_tank.x + 2] == 0 && map[my_tank.y + 1][my_tank.x + 2] == 0)
-					{
-						tank_walk(&my_tank, RIGHT, &img_mytank[my_tank.direction], 1);
-					}
-					else if (my_tank.direction != RIGHT)
-					{
-						my_tank.direction = RIGHT;
-						tank_walk(&my_tank, RIGHT, &img_mytank[my_tank.direction], 0);
-					}
-					break;
-
-				case 'j'://开火
-					if (!my_bullet.status)
-					{
-						PlaySound(_T("paoji.wav"), NULL, SND_FILENAME | SND_ASYNC);
-						if (my_tank.direction == UP)
-						{
-							//子弹绘图坐标修正
-							my_bullet.pos_x = my_tank.x * 25 + 23;
-							my_bullet.pos_y = my_tank.y * 25 - 3;
-						}
-						else if (my_tank.direction == LEFT)
-						{
-							//子弹绘图坐标修正
-							my_bullet.pos_x = my_tank.x * 25 - 3;
-							my_bullet.pos_y = my_tank.y * 25 + 23;
-						}
-						else if (my_tank.direction == DOWN)
-						{
-							//子弹绘图坐标修正
-							my_bullet.pos_x = my_tank.x * 25 + 23;
-							my_bullet.pos_y = my_tank.y * 25 + 50;
-						}
-						else if (my_tank.direction == RIGHT)
-						{
-							//子弹绘图坐标修正
-							my_bullet.pos_x = my_tank.x * 25 + 50;
-							my_bullet.pos_y = my_tank.y * 25 + 23;
-						}
-						//获取子弹方向
-						my_bullet.direction = my_tank.direction;
-						//改变子弹状态
-						my_bullet.status = !my_bullet.status;
-					}
-					break;
-
-				case 'p'://暂停
-					system("pause");
-					break;
-
-				default:
-					break;
+			}
+			if (KEY_DOWN(Key_DOWN))
+			{
+				if (my_tank.direction == DOWN && my_tank.y + 2 <= 25 && map[my_tank.y + 2][my_tank.x] == 0 && map[my_tank.y + 2][my_tank.x + 1] == 0)
+				{
+					do_tank_walk(&my_tank, DOWN, &img_mytank[my_tank.direction], 1);
 				}
+				else if (my_tank.direction != DOWN)
+				{
+					my_tank.direction = DOWN;
+					do_tank_walk(&my_tank, DOWN, &img_mytank[my_tank.direction], 0);
+				}
+			}
+			if (KEY_DOWN(Key_RIGHT))
+			{
+				if (my_tank.direction == RIGHT && my_tank.x + 2 <= 25 && map[my_tank.y][my_tank.x + 2] == 0 && map[my_tank.y + 1][my_tank.x + 2] == 0)
+				{
+					do_tank_walk(&my_tank, RIGHT, &img_mytank[my_tank.direction], 1);
+				}
+				else if (my_tank.direction != RIGHT)
+				{
+					my_tank.direction = RIGHT;
+					do_tank_walk(&my_tank, RIGHT, &img_mytank[my_tank.direction], 0);
+				}
+			}
+			//开火
+			if (KEY_DOWN(Key_J_Bullut))
+			{
+				//if (!my_bullet.status)
+				//{
+				//	PlaySound(_T("paoji.wav"), NULL, SND_FILENAME | SND_ASYNC);
+				//	if (my_tank.direction == UP)
+				//	{
+				//		//子弹绘图坐标修正
+				//		my_bullet.pos_x = my_tank.x * 25 + 23;
+				//		my_bullet.pos_y = my_tank.y * 25 - 3;
+				//	}
+				//	else if (my_tank.direction == LEFT)
+				//	{
+				//		//子弹绘图坐标修正
+				//		my_bullet.pos_x = my_tank.x * 25 - 3;
+				//		my_bullet.pos_y = my_tank.y * 25 + 23;
+				//	}
+				//	else if (my_tank.direction == DOWN)
+				//	{
+				//		//子弹绘图坐标修正
+				//		my_bullet.pos_x = my_tank.x * 25 + 23;
+				//		my_bullet.pos_y = my_tank.y * 25 + 50;
+				//	}
+				//	else if (my_tank.direction == RIGHT)
+				//	{
+				//		//子弹绘图坐标修正
+				//		my_bullet.pos_x = my_tank.x * 25 + 50;
+				//		my_bullet.pos_y = my_tank.y * 25 + 23;
+				//	}
+				//	//获取子弹方向
+				//	my_bullet.direction = my_tank.direction;
+				//	//改变子弹状态
+				//	my_bullet.status = !my_bullet.status;
+				//	
+				//}
+				PlaySound(_T("paoji.wav"), NULL, SND_FILENAME | SND_ASYNC);
+				tank_fire(&my_tank, &my_bullet);
+			}
+			//暂停
+			if (KEY_DOWN(Key_P_Stop))
+			{
+				while (1)
+				{
+					system("pause");
+					if (KEY_DOWN(Key_P_Stop))
+						break;
+				}
+			}
+			if (KEY_DOWN(Key_ESC))
+			{
+				display_1();
+				break;
 			}
 		}
 		
 		
 		if (my_bullet.status)
-			bullet_action(&my_bullet);
+		{
+			if (bullet_action(&my_bullet, enemy_tank, my_tank.Is_Mycamp))
+			{
+				return false;
+			}
+		}
+		for (int i = 0;i < enemy_num;i++)
+		{
+			if (enemy_bullet[i].status)
+			{
+				if (bullet_action(&enemy_bullet[i], enemy_tank,false))
+				{
+					return false;
+				}
+			}
+		}
+		//判断敌方坦克是否全部消灭
+		int isWin = 0;
+		for (int i = 0;i < enemy_num;i++)
+		{
+			if (enemy_tank[i].live == 0)
+				isWin++;
+			if (isWin == 10)
+				return true;
+		}
 		Sleep(10);
 		times++;
 	}
 }
 
 
-void Map() {
+void Map(int stage) {
 	int i, j;
 	IMAGE img_home, img_wall_1, img_wall_2;
 
 	loadimage(&img_home, _T("home_1.jpg"), 50, 50);// 老鹰
 	loadimage(&img_wall_1, _T("wall_1.jpg"), 25, 25);//不可消除的墙
 	loadimage(&img_wall_2, _T("wall_2.jpg"), 25, 25);//可消除的墙
-	loadmap(1);
+	loadmap(stage);
 
 
 	for (i = 0; i < 26; i++) {
@@ -281,11 +433,11 @@ void loadmap(int stage)
 }
 
 
-bool tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step)
+bool do_tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step)
 {
 	int new_x = tank->x;
 	int new_y = tank->y;
-
+	int old_map = map[tank->y][tank->x];
 	if (step) {
 		if (dir == UP)
 		{
@@ -324,7 +476,7 @@ bool tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step)
 		//map[new_y][new_x + 1] = 200;
 		//map[new_y + 1][new_x] = 200;
 		//map[new_y + 1][new_x + 1] = 200;
-		set_map(new_x, new_y, 200);
+		set_map(new_x, new_y, old_map);
 
 		//更新坦克坐标
 		tank->x = new_x;
@@ -337,7 +489,7 @@ bool tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step)
 	return true;
 }
 
-void bullet_action(Bullet* bullet)
+bool bullet_action(Bullet* bullet,Tank* enemy_tank,bool Is_Mytank)
 {
 	//子弹在地图中二维数组的坐标
 	int x, y,x1,y1;
@@ -375,20 +527,51 @@ void bullet_action(Bullet* bullet)
 	}
 	else
 	{
-		return;
+		return false;
 	}
 	if (bullet->pos_x < 0 || bullet->pos_x>650 || bullet->pos_y < 0 || bullet->pos_y>650)
 	{
 		bullet->status = false;
-		return;
+		return false;
 	}
 	
 	//碰撞检查
 	if (map[y][x] == 4 || map[y1][y1] == 4)
 	{
+		bullet->status = false;
 		PlaySound(_T("boom.wav"), NULL, SND_FILENAME | SND_ASYNC);
-		return;
+		return true;
 	}
+
+	//击中我方坦克
+	if (map[y][x] == 200 || map[y1][x1] == 200)
+	{
+		//判断是否是敌方坦克发射的子弹
+		if(Is_Mytank==false)
+		return true;
+	}
+
+	//击中敌方坦克
+	if ((map[y][x] >= 100 && map[y][x] <= 109) || (map[y1][x1] >= 100 && map[y1][x1] <= 109))
+	{
+		//判断是否是我方发射的子弹
+		if (Is_Mytank == true)
+		{
+			Tank* tank = NULL;
+			bullet->status = false;
+			if (map[y][x] > 100 && map[y][x] <= 109)
+				tank = enemy_tank + (map[y][x] - 100);
+			else
+				tank = enemy_tank + (map[y1][x1] - 100);
+
+			tank->live = 0;
+			set_map(tank->x, tank->y, 0);
+			setfillcolor(BLACK);
+			solidrectangle(tank->x * 25, tank->y * 25, tank->x * 25 + 50, tank->y * 25 + 50);
+		}
+	}
+
+
 	//子弹击中可消除的墙
 	if (map[y][x] == 1)
 	{
@@ -421,6 +604,7 @@ void bullet_action(Bullet* bullet)
 		setfillcolor(WHITE);
 		solidrectangle(bullet->pos_x, bullet->pos_y, bullet->pos_x + 3, bullet->pos_y + 3);
 	}
+	return false;
 }
 
 void set_map(int x,int y,int val)
@@ -431,7 +615,7 @@ void set_map(int x,int y,int val)
 	map[y+1][x+1] = val;
 }
 
-void enemy_tank_walk(Tank* tank, DIRECTION direction, IMAGE* img)
+void tank_walk(Tank* tank, DIRECTION direction, IMAGE* img)
 {
 	switch (direction)
 	{
@@ -439,49 +623,147 @@ void enemy_tank_walk(Tank* tank, DIRECTION direction, IMAGE* img)
 		//前者判断是否越界，后者判断是否是空地
 		if (tank->direction == LEFT && tank->x - 1 >= 0 && map[tank->y][tank->x - 1] == 0 && map[tank->y + 1][tank->x - 1] == 0)
 		{
-			tank_walk(tank, LEFT, img, 1);
+			do_tank_walk(tank, LEFT, img, 1);
 		}
 		else if (tank->direction != LEFT)
 		{
 			//调整方向
 			tank->direction = LEFT;
-			tank_walk(tank, LEFT, img, 0);
+			do_tank_walk(tank, LEFT, img, 0);
 		}
 		break;
 	case UP://上
 		if (tank->direction == UP && tank->y - 1 >= 0 && map[tank->y - 1][tank->x] == 0 && map[tank->y - 1][tank->x + 1] == 0)
 		{
-			tank_walk(tank, UP, img, 1);
+			do_tank_walk(tank, UP, img, 1);
 		}
 		else if (tank->direction != UP)
 		{
 			tank->direction = UP;
-			tank_walk(tank, UP, img, 0);
+			do_tank_walk(tank, UP, img, 0);
 		}
 		break;
 
 	case DOWN://下
 		if (tank->direction == DOWN && tank->y + 2 <= 25 && map[tank->y + 2][tank->x] == 0 && map[tank->y + 2][tank->x + 1] == 0)
 		{
-			tank_walk(tank, DOWN, img, 1);
+			do_tank_walk(tank, DOWN, img, 1);
 		}
 		else if (tank->direction != DOWN)
 		{
 			tank->direction = DOWN;
-			tank_walk(tank, DOWN, img, 0);
+			do_tank_walk(tank, DOWN, img, 0);
 		}
 		break;
 
 	case RIGHT://右
 		if (tank->direction == RIGHT && tank->x + 2 <= 25 && map[tank->y][tank->x + 2] == 0 && map[tank->y + 1][tank->x + 2] == 0)
 		{
-			tank_walk(tank, RIGHT, img, 1);
+			do_tank_walk(tank, RIGHT, img, 1);
 		}
 		else if (tank->direction != RIGHT)
 		{
 			tank->direction = RIGHT;
-			tank_walk(tank, RIGHT, img, 0);
+			do_tank_walk(tank, RIGHT, img, 0);
 		}
 		break;
+	}
+}
+
+
+
+DIRECTION enemy_direction(Tank* tank, int x, int y)
+{
+	int ret = rand() % 100;
+	//目标在左方
+	if (tank->x > x)
+	{
+		//在左上方
+		if (tank->y > y)
+		{
+			if (ret <= 50)
+				return UP;
+			else
+				return LEFT;
+		}
+		//在左下方
+		else
+		{
+			if (ret <= 50)
+				return DOWN;
+			else
+				return LEFT;
+		}
+	}
+	//目标在右方
+	else
+	{
+		//右上方
+		if (tank->y > y)
+		{
+			if (ret <= 50)
+				return UP;
+			else
+				return RIGHT;
+		}
+		//右下方
+		else
+		{
+			if (ret <= 50)
+				return DOWN;
+			else
+				return RIGHT;
+		}
+	}
+}
+
+void tank_fire(Tank* tank, Bullet* bullet)
+{
+	if (!bullet->status)
+	{
+		//PlaySound(_T("paoji.wav"), NULL, SND_FILENAME | SND_ASYNC);
+		if (tank->direction == UP)
+		{
+			//子弹绘图坐标修正
+			bullet->pos_x = tank->x * 25 + 23;
+			bullet->pos_y = tank->y * 25 - 3;
+		}
+		else if (tank->direction == LEFT)
+		{
+			//子弹绘图坐标修正
+			bullet->pos_x = tank->x * 25 - 3;
+			bullet->pos_y = tank->y * 25 + 23;
+		}
+		else if (tank->direction == DOWN)
+		{
+			//子弹绘图坐标修正
+			bullet->pos_x = tank->x * 25 + 23;
+			bullet->pos_y = tank->y * 25 + 50;
+		}
+		else if (tank->direction == RIGHT)
+		{
+			//子弹绘图坐标修正
+			bullet->pos_x = tank->x * 25 + 50;
+			bullet->pos_y = tank->y * 25 + 23;
+		}
+		//获取子弹方向
+		bullet->direction = tank->direction;
+		//改变子弹状态
+		bullet->status = !bullet->status;
+	}
+}
+
+void gameover(bool result)
+{
+	IMAGE img;
+	if (result == true)
+	{
+		loadimage(&img, _T("success.jpg"), 500, 250);
+		putimage(80, 200, &img);
+	}
+	else
+	{
+		loadimage(&img, _T("failure.jpg"), 500, 250);
+		putimage(80, 200, &img);
 	}
 }

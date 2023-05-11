@@ -10,17 +10,21 @@ void display_1();//主菜单
 
 //游戏模块
 void loadmap(int stage);
-void Map();//地图_1
-void game();//游戏模块
+void Map(int stage);//地图_1
+bool game(int stage);//游戏模块
+void gameover(bool);
 /***************************************
 * 控制坦克按相应的方向移动
 * 返回值：失败 - false 成功 - true
 ***************************************/
-bool tank_walk(Tank* tank, DIRECTION dir, IMAGE* img, int step);
+bool do_tank_walk(Tank* tank, DIRECTION dir, IMAGE* img, int step);
 //子弹移动函数
-void bullet_action(Bullet* bullet);
+bool bullet_action(Bullet* bullet, Tank* enemy_tank,bool Is_mytank);
 //设置地图函数
 void set_map(int x, int y, int val);
 
 //敌方坦克移动
-void enemy_tank_walk(Tank* tank, DIRECTION direction, IMAGE* img);
+void tank_walk(Tank* tank, DIRECTION direction, IMAGE* img);
+DIRECTION enemy_direction(Tank* tank, int x, int y);
+//坦克开火
+void tank_fire(Tank* tank, Bullet* bullet);

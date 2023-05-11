@@ -35,7 +35,10 @@ void display_1()
 			{
 				setbkcolor(BLACK);//…Ë÷√±≥æ∞…´
 				cleardevice();
-				game();
+				bool result=game(2);
+				gameover(result);
+				system("pause");
+				
 				finish = false;
 				break;
 			}
