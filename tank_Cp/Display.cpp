@@ -14,7 +14,7 @@ void display_1()
 	IMAGE help_img;//help菜单图片
 	loadimage(&help_img, _T("help.bmp"), 650, 650);//加载图片
 
-	bool finish = true;//用于结束主菜单循环
+	int finish = 1;//用于结束主菜单循环
 	
 	//主菜单按钮功能实现
 	while (finish) 
@@ -35,11 +35,23 @@ void display_1()
 			{
 				setbkcolor(BLACK);//设置背景色
 				cleardevice();
-				bool result=game(2);
-				gameover(result);
-				system("pause");
+				int stage = 1;
+				while (1)
+				{
+					int result = game(stage);
+					gameover(result);
+					while (1)
+					{
+						system("pause");
+						if (KEY_DOWN(Key_ENTER))
+							break;
+					}
+					if (result)
+						stage++;
+				}
 				
-				finish = false;
+				
+				finish = 0;
 				break;
 			}
 			else if (mouse.x > 245 && mouse.x < 430 && mouse.y>235 && mouse.y < 300)

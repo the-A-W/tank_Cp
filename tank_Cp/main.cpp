@@ -61,7 +61,7 @@ void main()
 //	//ÏÔÊ¾Ì¹¿Ë
 //	putimage(my_tank.x * 25, my_tank.y * 25, &img_mytank[my_tank.direction]);
 //
-//	while (true)
+//	while (1)
 //	{
 //		if (_kbhit())
 //		{

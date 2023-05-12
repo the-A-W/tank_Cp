@@ -6,12 +6,12 @@
 //可消除的墙为1，不可消除的墙为2，老鹰 （3，4）敌方坦克 100~109,我方坦克200
 int map[26][26];
 
-bool game(int stage)
+int game(int stage)
 {
 	setbkcolor(BLACK);//设置背景色
 	cleardevice();
 	//背景音乐
-	//mciSendString(_T("play cxk_1.mp3 repeat"), NULL, 0, NULL);
+	mciSendString(_T("play cxk_1.mp3 repeat"), NULL, 0, NULL);
 
 	//初始化随机数种子
 	srand((unsigned int)time(NULL));
@@ -35,7 +35,7 @@ bool game(int stage)
 	//敌方坦克存在数量
 	int enemy_total = 3;
 	//子弹目前不存在
-	my_bullet.status = false;
+	my_bullet.status = 0;
 	
 
 	//加载坦克图片
@@ -80,9 +80,9 @@ bool game(int stage)
 		enemy_tank[i].y = 0;
 		enemy_tank[i].live = 1;
 		enemy_tank[i].direction = DOWN;
-		enemy_tank[i].Is_Mycamp = false;
+		enemy_tank[i].Is_Mycamp = 0;
 		//set_map(enemy_tank[i].x, enemy_tank[i].y, 100 + i);
-		enemy_bullet[i].status = false;
+		enemy_bullet[i].status = 0;
 	}
 	//敌方坦克登场
 	do_tank_walk(&enemy_tank[0], DOWN, &img_enemytank[DOWN], 0);
@@ -97,7 +97,7 @@ bool game(int stage)
 	putimage(my_tank.x * 25, my_tank.y * 25, &img_mytank[my_tank.direction]);
 	
 	
-	while (true)
+	while (1)
 	{
 		if (times > 0 && times % 1000 == 0 && enemy_total < enemy_num)
 		{
@@ -341,16 +341,16 @@ bool game(int stage)
 		{
 			if (bullet_action(&my_bullet, enemy_tank, my_tank.Is_Mycamp))
 			{
-				return false;
+				return 0;
 			}
 		}
 		for (int i = 0;i < enemy_num;i++)
 		{
 			if (enemy_bullet[i].status)
 			{
-				if (bullet_action(&enemy_bullet[i], enemy_tank,false))
+				if (bullet_action(&enemy_bullet[i], enemy_tank,0))
 				{
-					return false;
+					return 0;
 				}
 			}
 		}
@@ -361,7 +361,7 @@ bool game(int stage)
 			if (enemy_tank[i].live == 0)
 				isWin++;
 			if (isWin == 10)
-				return true;
+				return 1;
 		}
 		Sleep(10);
 		times++;
@@ -433,7 +433,7 @@ void loadmap(int stage)
 }
 
 
-bool do_tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step)
+int do_tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step)
 {
 	int new_x = tank->x;
 	int new_y = tank->y;
@@ -457,7 +457,7 @@ bool do_tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step)
 		}
 		else
 		{
-			return false;
+			return 0;
 		}
 		//清除地图数组上原坦克位置
 		//map[tank->y][tank->x] = 0;
@@ -486,10 +486,10 @@ bool do_tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step)
 	//调整方向
 	//tank->direction = dir;
 	putimage(tank->x * 25, tank->y * 25, img);
-	return true;
+	return 1;
 }
 
-bool bullet_action(Bullet* bullet,Tank* enemy_tank,bool Is_Mytank)
+int bullet_action(Bullet* bullet,Tank* enemy_tank,int Is_Mytank)
 {
 	//子弹在地图中二维数组的坐标
 	int x, y,x1,y1;
@@ -527,38 +527,38 @@ bool bullet_action(Bullet* bullet,Tank* enemy_tank,bool Is_Mytank)
 	}
 	else
 	{
-		return false;
+		return 0;
 	}
 	if (bullet->pos_x < 0 || bullet->pos_x>650 || bullet->pos_y < 0 || bullet->pos_y>650)
 	{
-		bullet->status = false;
-		return false;
+		bullet->status = 0;
+		return 0;
 	}
 	
 	//碰撞检查
 	if (map[y][x] == 4 || map[y1][y1] == 4)
 	{
-		bullet->status = false;
+		bullet->status = 0;
 		PlaySound(_T("boom.wav"), NULL, SND_FILENAME | SND_ASYNC);
-		return true;
+		return 1;
 	}
 
 	//击中我方坦克
 	if (map[y][x] == 200 || map[y1][x1] == 200)
 	{
 		//判断是否是敌方坦克发射的子弹
-		if(Is_Mytank==false)
-		return true;
+		if(Is_Mytank==0)
+		return 1;
 	}
 
 	//击中敌方坦克
 	if ((map[y][x] >= 100 && map[y][x] <= 109) || (map[y1][x1] >= 100 && map[y1][x1] <= 109))
 	{
 		//判断是否是我方发射的子弹
-		if (Is_Mytank == true)
+		if (Is_Mytank == 1)
 		{
 			Tank* tank = NULL;
-			bullet->status = false;
+			bullet->status = 0;
 			if (map[y][x] > 100 && map[y][x] <= 109)
 				tank = enemy_tank + (map[y][x] - 100);
 			else
@@ -576,25 +576,25 @@ bool bullet_action(Bullet* bullet,Tank* enemy_tank,bool Is_Mytank)
 	if (map[y][x] == 1)
 	{
 		map[y][x] = 0;
-		bullet->status = false;
+		bullet->status = 0;
 		setfillcolor(BLACK);
 		solidrectangle(x * 25, y * 25, x * 25 + 25, y * 25 + 25);
 	}
 	else if(map[y][x]==2)//击中不可消除的墙
 	{
-		bullet->status = false;
+		bullet->status = 0;
 	}
 	//子弹击中可消除的墙
 	if (map[y1][x1] == 1)
 	{
 		map[y1][x1] = 0;
-		bullet->status = false;
+		bullet->status = 0;
 		setfillcolor(BLACK);
 		solidrectangle(x1 * 25, y1 * 25, x1 * 25 + 25, y1 * 25 + 25);
 	}
 	else if (map[y1][x1] == 2)//击中不可消除的墙
 	{
-		bullet->status = false;
+		bullet->status = 0;
 	}
 
 
@@ -604,7 +604,7 @@ bool bullet_action(Bullet* bullet,Tank* enemy_tank,bool Is_Mytank)
 		setfillcolor(WHITE);
 		solidrectangle(bullet->pos_x, bullet->pos_y, bullet->pos_x + 3, bullet->pos_y + 3);
 	}
-	return false;
+	return 0;
 }
 
 void set_map(int x,int y,int val)
@@ -753,10 +753,10 @@ void tank_fire(Tank* tank, Bullet* bullet)
 	}
 }
 
-void gameover(bool result)
+void gameover(int result)
 {
 	IMAGE img;
-	if (result == true)
+	if (result == 1)
 	{
 		loadimage(&img, _T("success.jpg"), 500, 250);
 		putimage(80, 200, &img);

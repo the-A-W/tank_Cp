@@ -33,7 +33,7 @@ enum DIRECTION
 //键盘控制
 enum Key
 {
-	Key_UP = 'W', Key_LEFT = 'A', Key_RIGHT = 'D', Key_DOWN = 'S', Key_J_Bullut = 'J', Key_P_Stop = 'P', Key_ESC = 27
+	Key_UP = 'W', Key_LEFT = 'A', Key_RIGHT = 'D', Key_DOWN = 'S', Key_J_Bullut = 'J', Key_P_Stop = 'P', Key_ESC = 27, Key_ENTER = 13
 };
 
 struct Tank
@@ -42,8 +42,8 @@ struct Tank
 	int y;	//坦克在地图数组所在行
 	DIRECTION direction;	//坦克的方向，上、下、左、右
 	//int hp;	//坦克血量，为零则死亡
-	bool Is_Mycamp = true;
-	bool live;//坦克是否死亡
+	int Is_Mycamp = 1;
+	int live;//坦克是否死亡
 };
 
 struct Bullet
@@ -54,7 +54,7 @@ struct Bullet
 	//方向
 	DIRECTION direction;
 	//子弹状态
-	bool status;
+	int status;
 };
 
 
