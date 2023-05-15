@@ -11,7 +11,7 @@ void display_1();//主菜单
 //游戏模块
 void loadmap(int stage);
 void Map(int stage);//地图_1
-int game(int stage);//游戏模块
+int game(int stage,int choice);//游戏模块
 void gameover(int);
 /***************************************
 * 控制坦克按相应的方向移动
@@ -28,3 +28,7 @@ void tank_walk(Tank* tank, DIRECTION direction, IMAGE* img);
 DIRECTION enemy_direction(Tank* tank, int x, int y);
 //坦克开火
 void tank_fire(Tank* tank, Bullet* bullet);
+
+
+void save(int stage,Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bullet, int& enemy_total, int& times, int map[map_row][map_col]);
+void read(Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bullet, int enemy_total, int times, int map[map_row][map_col]);

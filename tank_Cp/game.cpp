@@ -6,15 +6,15 @@
 //可消除的墙为1，不可消除的墙为2，老鹰 （3，4）敌方坦克 100~109,我方坦克200
 int map[26][26];
 
-int game(int stage)
+int game(int stage,int choice)
 {
 	setbkcolor(BLACK);//设置背景色
 	cleardevice();
 	//背景音乐
-	mciSendString(_T("play cxk_1.mp3 repeat"), NULL, 0, NULL);
-
+	//mciSendString(_T("play cxk_1.mp3 repeat"), NULL, 0, NULL);
 	//初始化随机数种子
 	srand((unsigned int)time(NULL));
+	
 
 	//我方坦克
 	Tank my_tank;
@@ -28,14 +28,18 @@ int game(int stage)
 
 
 	//加载地图
+	loadmap(stage);
+
 	Map(stage);
 
 	//记录当前的程序的休眠次数，每次10ms
 	int times = 0;
 	//敌方坦克存在数量
-	int enemy_total = 3;
+	int enemy_total = 0;
 	//子弹目前不存在
 	my_bullet.status = 0;
+	
+	//测试
 	
 
 	//加载坦克图片
@@ -55,12 +59,13 @@ int game(int stage)
 	my_tank.y = 24;
 	my_tank.direction = UP;
 	my_tank.live = 1;
-
+	//Tank tank_save = {0 ,2,DOWN,1 };
+	//my_tank = tank_save;
 	//map[my_tank.y][my_tank.x] = 200;
 	//map[my_tank.y][my_tank.x+1] = 200;
 	//map[my_tank.y+1][my_tank.x] = 200;
 	//map[my_tank.y+1][my_tank.x+1] = 200;
-	set_map(my_tank.x, my_tank.y, 200);
+	//set_map(my_tank.x, my_tank.y, 200);
 
 	//设置敌方坦克出场位置
 	for (int i = 0;i < enemy_num;i++)
@@ -84,25 +89,50 @@ int game(int stage)
 		//set_map(enemy_tank[i].x, enemy_tank[i].y, 100 + i);
 		enemy_bullet[i].status = 0;
 	}
-	//敌方坦克登场
-	do_tank_walk(&enemy_tank[0], DOWN, &img_enemytank[DOWN], 0);
-	set_map(enemy_tank[0].x, enemy_tank[0].y, 100 );
-	do_tank_walk(&enemy_tank[1], DOWN, &img_enemytank[DOWN], 0);
-	set_map(enemy_tank[1].x, enemy_tank[1].y, 101);
-	do_tank_walk(&enemy_tank[2], DOWN, &img_enemytank[DOWN], 0);
-	set_map(enemy_tank[2].x, enemy_tank[2].y, 102);
-	enemy_total = 3;
 
-	//显示坦克		
+	enemy_total = 3;
+	//enemy_tank[0].x = 4;
+	//enemy_tank[0].y = 0;
+	//enemy_tank[0].live = 0;
+	//敌方坦克登场
+	if (choice)
+	{
+		read(enemy_tank, &my_tank, enemy_bullet, &my_bullet, enemy_total, times, map);
+	}
+	Map(stage);
+	for (int i = 0;i < enemy_total;i++)
+	{
+		if (enemy_tank[i].live)
+		{
+			set_map(enemy_tank[i].x, enemy_tank[i].y, 100 + i);
+			do_tank_walk(&enemy_tank[i], enemy_tank[i].direction, &img_enemytank[enemy_tank[i].direction], 0);
+		}
+
+	}
+	//set_map(enemy_tank[0].x, enemy_tank[0].y, 100 );
+	//do_tank_walk(&enemy_tank[1], DOWN, &img_enemytank[DOWN], 0);
+	//set_map(enemy_tank[1].x, enemy_tank[1].y, 101);
+	//do_tank_walk(&enemy_tank[2], DOWN, &img_enemytank[DOWN], 0);
+	//set_map(enemy_tank[2].x, enemy_tank[2].y, 102);
+	//do_tank_walk(&enemy_tank[4], DOWN, &img_enemytank[DOWN], 0);
+	//set_map(enemy_tank[3].x, enemy_tank[3].y, 103);
+	
+
+	//显示坦克	
+	set_map(my_tank.x, my_tank.y, 200);
 	putimage(my_tank.x * 25, my_tank.y * 25, &img_mytank[my_tank.direction]);
 	
 	
 	while (1)
 	{
-		if (times > 0 && times % 1000 == 0 && enemy_total < enemy_num)
+		//防止坦克出生重叠
+		if (map[enemy_tank[enemy_total-1].x][enemy_tank[enemy_total-1].y] == 0)
 		{
-			set_map(enemy_tank[enemy_total].x, enemy_tank[enemy_total].y, 100 + enemy_total);
-			enemy_total++;
+			if (times > 0 && times % 1000 == 0 && enemy_total < enemy_num)
+			{
+				set_map(enemy_tank[enemy_total].x, enemy_tank[enemy_total].y, 100 + enemy_total);
+				enemy_total++;
+			}
 		}
 		if (times>0 && times % 200 == 0)
 		{
@@ -331,8 +361,13 @@ int game(int stage)
 			}
 			if (KEY_DOWN(Key_ESC))
 			{
+				
+				if (1)
+				{
+					save(stage,enemy_tank, &my_tank,enemy_bullet,&my_bullet, enemy_total, times,map);
+				}
 				display_1();
-				break;
+				//break;
 			}
 		}
 		
@@ -376,7 +411,6 @@ void Map(int stage) {
 	loadimage(&img_home, _T("home_1.jpg"), 50, 50);// 老鹰
 	loadimage(&img_wall_1, _T("wall_1.jpg"), 25, 25);//不可消除的墙
 	loadimage(&img_wall_2, _T("wall_2.jpg"), 25, 25);//可消除的墙
-	loadmap(stage);
 
 
 	for (i = 0; i < 26; i++) {
@@ -438,7 +472,8 @@ int do_tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step)
 	int new_x = tank->x;
 	int new_y = tank->y;
 	int old_map = map[tank->y][tank->x];
-	if (step) {
+	if (step) 
+	{
 		if (dir == UP)
 		{
 			new_y--;
@@ -460,31 +495,23 @@ int do_tank_walk(Tank* tank,DIRECTION dir,IMAGE *img,int step)
 			return 0;
 		}
 		//清除地图数组上原坦克位置
-		//map[tank->y][tank->x] = 0;
-		//map[tank->y][tank->x + 1] = 0;
-		//map[tank->y + 1][tank->x] = 0;
-		//map[tank->y + 1][tank->x + 1] = 0;
+
 		set_map(tank->x, tank->y, 0);
+		//擦除原位置的坦克图像
+		
 	}
-	//擦除原位置的坦克图像
 	setfillcolor(BLACK);
 	solidrectangle(tank->x * 25, tank->y * 25, tank->x * 25 + 50, tank->y * 25 + 50);
 	if (step)
 	{
 		//更新地图数组坦克位置
-		//map[new_y][new_x] = 200;
-		//map[new_y][new_x + 1] = 200;
-		//map[new_y + 1][new_x] = 200;
-		//map[new_y + 1][new_x + 1] = 200;
+		
 		set_map(new_x, new_y, old_map);
 
 		//更新坦克坐标
 		tank->x = new_x;
 		tank->y = new_y;
 	}
-	//调整方向应在外部实现，否则会传入键入前的坦克方向
-	//调整方向
-	//tank->direction = dir;
 	putimage(tank->x * 25, tank->y * 25, img);
 	return 1;
 }
@@ -604,6 +631,9 @@ int bullet_action(Bullet* bullet,Tank* enemy_tank,int Is_Mytank)
 		setfillcolor(WHITE);
 		solidrectangle(bullet->pos_x, bullet->pos_y, bullet->pos_x + 3, bullet->pos_y + 3);
 	}
+	//setfillcolor(BLACK);
+    //solidrectangle(bullet->pos_x, bullet->pos_y, bullet->pos_x+3, bullet->pos_y+3);
+
 	return 0;
 }
 
@@ -669,8 +699,6 @@ void tank_walk(Tank* tank, DIRECTION direction, IMAGE* img)
 		break;
 	}
 }
-
-
 
 DIRECTION enemy_direction(Tank* tank, int x, int y)
 {
@@ -765,5 +793,104 @@ void gameover(int result)
 	{
 		loadimage(&img, _T("failure.jpg"), 500, 250);
 		putimage(80, 200, &img);
+	}
+}
+
+void save(int stage,Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bullet, int& enemy_total, int& times, int map[map_row][map_col])
+{
+	ofstream file_save;
+	file_save.open("save.txt", ios::trunc | ios::in);
+	file_save << setw(2) << stage << endl;
+	for (int i = 0;i<enemy_total;i++)
+	{
+		file_save << (enemy_tank + i)->x << " " << (enemy_tank + i)->y << " " << (enemy_tank + i)->direction << " " << (enemy_tank + i)->Is_Mycamp << " " << (enemy_tank + i)->live << endl;
+		file_save << (enemy_bullet + i)->pos_x << " " << (enemy_bullet + i)->pos_y << " " << (enemy_bullet + i)->direction << " " << (enemy_bullet + i)->status << endl;
+	}
+	file_save << my_tank->x << " " << my_tank->y << " " << my_tank->direction << " " << my_tank->Is_Mycamp << " " << my_tank->live << endl;
+	file_save << enemy_total <<" "<< times << endl;
+	for (int i = 0;i < map_row;i++)
+	{
+		for (int j = 0;j < map_col;j++)
+		{
+			file_save << map[i][j] << " ";
+		}
+	}
+	file_save.close();
+}
+
+void read(Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bullet, int enemy_total, int times, int map[map_row][map_col])
+{
+	int stage;
+	ifstream file_read;
+	file_read.open("save.txt", ios::out);
+	//移动读取的指针，因为关卡数站两个字节，还有一个回车占两个字节所以需要移动4个字节（实际移动两个字节也行，因为不会读取回车）
+	file_read.seekg(4);
+	for (int i = 0;i < enemy_total;i++)
+	{
+		int dir_temp = 0;
+		file_read >> (enemy_tank + i)->x >> (enemy_tank + i)->y >> dir_temp >> (enemy_tank + i)->Is_Mycamp >> (enemy_tank + i)->live;
+		//不能用 >> 直接把值赋值给枚举常量
+		switch (dir_temp)
+		{
+		case 0:
+			(enemy_tank + i)->direction = UP;
+			break;
+		case 1:
+			(enemy_tank + i)->direction = DOWN;
+			break;
+		case 2:
+			(enemy_tank + i)->direction = LEFT;
+			break;
+		case 3:
+			(enemy_tank + i)->direction = RIGHT;
+			break;
+		default:
+			break;
+		}
+		file_read >> (enemy_bullet + i)->pos_x >> (enemy_bullet + i)->pos_y >> dir_temp >> (enemy_bullet + i)->status;
+		switch (dir_temp)
+		{
+		case 0:
+			(enemy_bullet + i)->direction = UP;
+			break;
+		case 1:
+			(enemy_bullet + i)->direction = DOWN;
+			break;
+		case 2:
+			(enemy_bullet + i)->direction = LEFT;
+			break;
+		case 3:
+			(enemy_bullet + i)->direction = RIGHT;
+			break;
+		default:
+			break;
+		}
+	}
+	int mydir_temp;
+	file_read >> my_tank->x >> my_tank->y >> mydir_temp >> my_tank->Is_Mycamp >> my_tank->live;
+	switch (mydir_temp)
+	{
+	case 0:
+		my_tank->direction = UP;
+		break;
+	case 1:
+		my_tank->direction = DOWN;
+		break;
+	case 2:
+		my_tank->direction = LEFT;
+		break;
+	case 3:
+		my_tank->direction = RIGHT;
+		break;
+	default:
+		break;
+	}
+	file_read >> enemy_total >> times;
+	for (int i = 0;i < map_row;i++)
+	{
+		for (int j = 0;j < map_col;j++)
+		{
+			file_read >> map[i][j];
+		}
 	}
 }

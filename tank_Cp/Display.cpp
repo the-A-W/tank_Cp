@@ -14,10 +14,10 @@ void display_1()
 	IMAGE help_img;//help菜单图片
 	loadimage(&help_img, _T("help.bmp"), 650, 650);//加载图片
 
-	int finish = 1;//用于结束主菜单循环
+	//int finish = 1;//用于结束主菜单循环
 	
 	//主菜单按钮功能实现
-	while (finish) 
+	while (1) 
 	{
 		mouse = GetMouseMsg();
 
@@ -33,12 +33,12 @@ void display_1()
 		case WM_LBUTTONDOWN:
 			if (mouse.x > 245 && mouse.x < 430 && mouse.y>155 && mouse.y < 225)
 			{
-				setbkcolor(BLACK);//设置背景色
-				cleardevice();
+				//setbkcolor(BLACK);//设置背景色
+				//cleardevice();
 				int stage = 1;
 				while (1)
 				{
-					int result = game(stage);
+					int result = game(stage, 0);
 					gameover(result);
 					while (1)
 					{
@@ -49,14 +49,31 @@ void display_1()
 					if (result)
 						stage++;
 				}
-				
-				
-				finish = 0;
 				break;
+			
 			}
+				
 			else if (mouse.x > 245 && mouse.x < 430 && mouse.y>235 && mouse.y < 300)
 			{
-				/*Log_in();*/
+				int stage = 1;
+				fstream file;
+				file.open("save.txt");
+				file >> stage;
+				while (1)
+				{
+					int choice = 1;
+					int result = game(stage, choice);
+					gameover(result);
+					while (1)
+					{
+						system("pause");
+						if (KEY_DOWN(Key_ENTER))
+							break;
+					}
+					if (result)
+						stage++;
+					choice = 0;
+				}
 				break;
 			}
 			else if (mouse.x > 245 && mouse.x < 430 && mouse.y>400 && mouse.y < 470)

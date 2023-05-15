@@ -7,6 +7,7 @@
 #include <Windows.h>
 #include <mmsystem.h>
 #include<time.h>
+#include <iomanip>
 #pragma comment (lib, "Winmm.lib")//导入音乐库
 
 //获取键盘输入，用法参考：https://blog.csdn.net/JG_DF_/article/details/119238168
