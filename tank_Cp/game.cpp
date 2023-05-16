@@ -11,7 +11,7 @@ int game(int stage,int choice)
 	setbkcolor(BLACK);//设置背景色
 	cleardevice();
 	//背景音乐
-	//mciSendString(_T("play cxk_1.mp3 repeat"), NULL, 0, NULL);
+	mciSendString(_T("play cxk_1.mp3 repeat"), NULL, 0, NULL);
 	//初始化随机数种子
 	srand((unsigned int)time(NULL));
 	
@@ -30,7 +30,7 @@ int game(int stage,int choice)
 	//加载地图
 	loadmap(stage);
 
-	Map(stage);
+	//Map(stage);
 
 	//记录当前的程序的休眠次数，每次10ms
 	int times = 0;
@@ -99,6 +99,9 @@ int game(int stage,int choice)
 	{
 		read(enemy_tank, &my_tank, enemy_bullet, &my_bullet, enemy_total, times, map);
 	}
+	choice = 0;
+	//地图图片修正
+	map[24][12]=3;
 	Map(stage);
 	for (int i = 0;i < enemy_total;i++)
 	{
@@ -125,6 +128,7 @@ int game(int stage,int choice)
 	
 	while (1)
 	{
+		
 		//防止坦克出生重叠
 		if (map[enemy_tank[enemy_total-1].x][enemy_tank[enemy_total-1].y] == 0)
 		{
@@ -132,6 +136,7 @@ int game(int stage,int choice)
 			{
 				set_map(enemy_tank[enemy_total].x, enemy_tank[enemy_total].y, 100 + enemy_total);
 				enemy_total++;
+				times = 0;
 			}
 		}
 		if (times>0 && times % 200 == 0)
@@ -167,7 +172,7 @@ int game(int stage,int choice)
 				}
 			}
 		}
-		if (times % 10 == 0)
+		if (times % 15 == 0)
 		{
 			//if (_kbhit())
 			//{
@@ -276,7 +281,7 @@ int game(int stage,int choice)
 			}
 			if (KEY_DOWN(Key_UP))
 			{
-				if (my_tank.direction == UP && my_tank.y - 1 >= 0 && map[my_tank.y - 1][my_tank.x] == 0 && map[my_tank.y - 1][my_tank.x + 1] == 0)
+				/*if (my_tank.direction == UP && my_tank.y - 1 >= 0 && map[my_tank.y - 1][my_tank.x] == 0 && map[my_tank.y - 1][my_tank.x + 1] == 0)
 					{
 						do_tank_walk(&my_tank, UP, &img_mytank[my_tank.direction], 1);
 					}
@@ -284,11 +289,12 @@ int game(int stage,int choice)
 					{
 						my_tank.direction = UP;
 						do_tank_walk(&my_tank, UP, &img_mytank[my_tank.direction], 0);
-					}
+					}*/
+				tank_walk(&my_tank, UP, &img_mytank[UP]);
 			}
 			if (KEY_DOWN(Key_DOWN))
 			{
-				if (my_tank.direction == DOWN && my_tank.y + 2 <= 25 && map[my_tank.y + 2][my_tank.x] == 0 && map[my_tank.y + 2][my_tank.x + 1] == 0)
+				/*if (my_tank.direction == DOWN && my_tank.y + 2 <= 25 && map[my_tank.y + 2][my_tank.x] == 0 && map[my_tank.y + 2][my_tank.x + 1] == 0)
 				{
 					do_tank_walk(&my_tank, DOWN, &img_mytank[my_tank.direction], 1);
 				}
@@ -296,11 +302,12 @@ int game(int stage,int choice)
 				{
 					my_tank.direction = DOWN;
 					do_tank_walk(&my_tank, DOWN, &img_mytank[my_tank.direction], 0);
-				}
+				}*/
+				tank_walk(&my_tank, DOWN, &img_mytank[DOWN]);
 			}
 			if (KEY_DOWN(Key_RIGHT))
 			{
-				if (my_tank.direction == RIGHT && my_tank.x + 2 <= 25 && map[my_tank.y][my_tank.x + 2] == 0 && map[my_tank.y + 1][my_tank.x + 2] == 0)
+				/*if (my_tank.direction == RIGHT && my_tank.x + 2 <= 25 && map[my_tank.y][my_tank.x + 2] == 0 && map[my_tank.y + 1][my_tank.x + 2] == 0)
 				{
 					do_tank_walk(&my_tank, RIGHT, &img_mytank[my_tank.direction], 1);
 				}
@@ -308,7 +315,8 @@ int game(int stage,int choice)
 				{
 					my_tank.direction = RIGHT;
 					do_tank_walk(&my_tank, RIGHT, &img_mytank[my_tank.direction], 0);
-				}
+				}*/
+				tank_walk(&my_tank, RIGHT, &img_mytank[RIGHT]);
 			}
 			//开火
 			if (KEY_DOWN(Key_J_Bullut))
@@ -352,12 +360,9 @@ int game(int stage,int choice)
 			//暂停
 			if (KEY_DOWN(Key_P_Stop))
 			{
-				while (1)
-				{
-					system("pause");
-					if (KEY_DOWN(Key_P_Stop))
-						break;
-				}
+				mciSendString(_T("pause cxk_1.mp3"), 0, 0, 0);
+				system("pause");
+				mciSendString(_T("resume cxk_1.mp3"), 0, 0, 0);
 			}
 			if (KEY_DOWN(Key_ESC))
 			{
@@ -366,6 +371,7 @@ int game(int stage,int choice)
 				{
 					save(stage,enemy_tank, &my_tank,enemy_bullet,&my_bullet, enemy_total, times,map);
 				}
+				mciSendString(_T("close cxk_1.mp3"), NULL, 0, NULL);
 				display_1();
 				//break;
 			}
@@ -379,7 +385,7 @@ int game(int stage,int choice)
 				return 0;
 			}
 		}
-		for (int i = 0;i < enemy_num;i++)
+		for (int i = 0;i < enemy_total;i++)
 		{
 			if (enemy_bullet[i].status)
 			{
@@ -391,11 +397,11 @@ int game(int stage,int choice)
 		}
 		//判断敌方坦克是否全部消灭
 		int isWin = 0;
-		for (int i = 0;i < enemy_num;i++)
+		for (int i = 0;i < enemy_total;i++)
 		{
 			if (enemy_tank[i].live == 0)
 				isWin++;
-			if (isWin == 10)
+			if (isWin == enemy_num)
 				return 1;
 		}
 		Sleep(10);
@@ -409,8 +415,8 @@ void Map(int stage) {
 	IMAGE img_home, img_wall_1, img_wall_2;
 
 	loadimage(&img_home, _T("home_1.jpg"), 50, 50);// 老鹰
-	loadimage(&img_wall_1, _T("wall_1.jpg"), 25, 25);//不可消除的墙
-	loadimage(&img_wall_2, _T("wall_2.jpg"), 25, 25);//可消除的墙
+	loadimage(&img_wall_1, _T("wall_1.jpg"), 25, 25);//可消除的墙
+	loadimage(&img_wall_2, _T("wall_2.png"), 25, 25);//不可消除的墙
 
 
 	for (i = 0; i < 26; i++) {
@@ -566,7 +572,7 @@ int bullet_action(Bullet* bullet,Tank* enemy_tank,int Is_Mytank)
 	if (map[y][x] == 4 || map[y1][y1] == 4)
 	{
 		bullet->status = 0;
-		PlaySound(_T("boom.wav"), NULL, SND_FILENAME | SND_ASYNC);
+		//PlaySound(_T("boom.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		return 1;
 	}
 
@@ -786,14 +792,19 @@ void gameover(int result)
 	IMAGE img;
 	if (result == 1)
 	{
-		loadimage(&img, _T("success.jpg"), 500, 250);
+		loadimage(&img, _T("success_1.jpg"), 500, 250);
 		putimage(80, 200, &img);
+		mciSendString(_T("close cxk_1.mp3"), NULL, 0, NULL);
+		PlaySound(_T("success.wav"), NULL, SND_FILENAME | SND_ASYNC);
 	}
 	else
 	{
 		loadimage(&img, _T("failure.jpg"), 500, 250);
 		putimage(80, 200, &img);
+		mciSendString(_T("close cxk_1.mp3"), NULL, 0, NULL);
+		PlaySound(_T("boom.wav"), NULL, SND_FILENAME | SND_ASYNC);
 	}
+	
 }
 
 void save(int stage,Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bullet, int& enemy_total, int& times, int map[map_row][map_col])
@@ -801,13 +812,14 @@ void save(int stage,Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bulle
 	ofstream file_save;
 	file_save.open("save.txt", ios::trunc | ios::in);
 	file_save << setw(2) << stage << endl;
+	file_save << enemy_total << endl;
 	for (int i = 0;i<enemy_total;i++)
 	{
 		file_save << (enemy_tank + i)->x << " " << (enemy_tank + i)->y << " " << (enemy_tank + i)->direction << " " << (enemy_tank + i)->Is_Mycamp << " " << (enemy_tank + i)->live << endl;
 		file_save << (enemy_bullet + i)->pos_x << " " << (enemy_bullet + i)->pos_y << " " << (enemy_bullet + i)->direction << " " << (enemy_bullet + i)->status << endl;
 	}
 	file_save << my_tank->x << " " << my_tank->y << " " << my_tank->direction << " " << my_tank->Is_Mycamp << " " << my_tank->live << endl;
-	file_save << enemy_total <<" "<< times << endl;
+	file_save << times << endl;
 	for (int i = 0;i < map_row;i++)
 	{
 		for (int j = 0;j < map_col;j++)
@@ -818,13 +830,14 @@ void save(int stage,Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bulle
 	file_save.close();
 }
 
-void read(Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bullet, int enemy_total, int times, int map[map_row][map_col])
+void read(Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bullet, int& enemy_total, int& times, int map[map_row][map_col])
 {
 	int stage;
 	ifstream file_read;
 	file_read.open("save.txt", ios::out);
 	//移动读取的指针，因为关卡数站两个字节，还有一个回车占两个字节所以需要移动4个字节（实际移动两个字节也行，因为不会读取回车）
 	file_read.seekg(4);
+	file_read >> enemy_total;
 	for (int i = 0;i < enemy_total;i++)
 	{
 		int dir_temp = 0;
@@ -885,7 +898,7 @@ void read(Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bull
 	default:
 		break;
 	}
-	file_read >> enemy_total >> times;
+	file_read  >> times;
 	for (int i = 0;i < map_row;i++)
 	{
 		for (int j = 0;j < map_col;j++)

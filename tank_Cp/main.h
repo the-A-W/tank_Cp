@@ -31,4 +31,4 @@ void tank_fire(Tank* tank, Bullet* bullet);
 
 
 void save(int stage,Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bullet, int& enemy_total, int& times, int map[map_row][map_col]);
-void read(Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bullet, int enemy_total, int times, int map[map_row][map_col]);
+void read(Tank* enemy_tank, Tank* my_tank, Bullet* enemy_bullet, Bullet* my_bullet, int &enemy_total, int& times, int map[map_row][map_col]);

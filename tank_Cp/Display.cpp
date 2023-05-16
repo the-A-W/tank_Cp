@@ -7,12 +7,12 @@ void display_1()
 	initgraph(650, 650);
 	//显示主菜单菜单
 	IMAGE display_1_img;
-	loadimage(&display_1_img, _T("display_1.png"), 650, 650);
+	loadimage(&display_1_img, _T("display_1.jpg"), 650, 650);
 	putimage(0, 0, &display_1_img);
 
 	MOUSEMSG mouse; //储存鼠标信息变量
 	IMAGE help_img;//help菜单图片
-	loadimage(&help_img, _T("help.bmp"), 650, 650);//加载图片
+	loadimage(&help_img, _T("help.png"), 650, 650);//加载图片
 
 	//int finish = 1;//用于结束主菜单循环
 	
@@ -59,9 +59,10 @@ void display_1()
 				fstream file;
 				file.open("save.txt");
 				file >> stage;
+				int choice=1;
 				while (1)
 				{
-					int choice = 1;
+		
 					int result = game(stage, choice);
 					gameover(result);
 					while (1)
